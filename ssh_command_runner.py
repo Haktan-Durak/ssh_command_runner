@@ -2,6 +2,7 @@ import subprocess
 import argparse
 from tabulate import tabulate
 import os
+import csv
 
 '''
 Created by Haktan Durak
@@ -14,6 +15,8 @@ parser.add_argument('--username', type=str, required=True, help="Username")
 parser.add_argument('--password', type=str, help="Password (optional)")
 parser.add_argument('--key_file', type=str, help="Private key file with path (optional)")
 parser.add_argument('--commands', nargs='*', help="Additional commands (space-separated)")
+parser.add_argument('--output_csv', type=str, help="CSV output file path (optional)")
+parser.add_argument('--output_html', type=str, help="HTML output file path (optional)")
 
 args = parser.parse_args()
 
@@ -27,6 +30,7 @@ with open(args.ip_file, 'r') as file:
 if not ip_list:
     print("Error: IP file is empty or contains only invalid entries.")
     exit(1)
+
 
 default_commands = [
     "whoami /priv",
@@ -45,6 +49,7 @@ for ip in ip_list:
     ip_results = [ip]
     for command in default_commands:
         try:
+            # Bağlantı yöntemi kontrolü
             if args.key_file:
                 cmd = ["crackmapexec", "ssh", ip, "-u", args.username, "-k", args.key_file, "-x", command]
             elif args.password:
@@ -62,4 +67,36 @@ for ip in ip_list:
     results.append(ip_results)
 
 headers = ["IP"] + default_commands
+
 print(tabulate(results, headers=headers, tablefmt="grid"))
+
+if args.output_csv:
+    with open(args.output_csv, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(headers)
+        writer.writerows(results)
+    print(f"Results saved to CSV file: {args.output_csv}")
+
+if args.output_html:
+    html_content = '<html><head><title>Command Execution Results</title></head><body>'
+    html_content += '<h2>Command Execution Results</h2>'
+    html_content += '<table border="1" style="border-collapse: collapse; width: 100%;">'
+    
+    html_content += '<tr>'
+    for header in headers:
+        html_content += f'<th style="padding: 8px; text-align: center;">{header}</th>'
+    html_content += '</tr>'
+    
+    for row in results:
+        html_content += '<tr>'
+        for cell in row:
+            html_content += f'<td style="padding: 8px; text-align: center;">{cell}</td>'
+        html_content += '</tr>'
+    
+    html_content += '</table>'
+    html_content += '</body></html>'
+    
+
+    with open(args.output_html, 'w') as htmlfile:
+        htmlfile.write(html_content)
+    print(f"Results saved to HTML file: {args.output_html}")
