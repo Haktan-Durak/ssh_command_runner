@@ -3,6 +3,7 @@ import argparse
 from tabulate import tabulate
 import os
 import csv
+import re
 
 '''
 Created by Haktan Durak
@@ -15,8 +16,8 @@ parser.add_argument('--username', type=str, required=True, help="Username")
 parser.add_argument('--password', type=str, help="Password (optional)")
 parser.add_argument('--key_file', type=str, help="Private key file with path (optional)")
 parser.add_argument('--commands', nargs='*', help="Additional commands (space-separated)")
-parser.add_argument('--output_csv', type=str, help="CSV output file path (optional)")
-parser.add_argument('--output_html', type=str, help="HTML output file path (optional)")
+parser.add_argument('--output_csv', action='store_true', help="Save results to a CSV file")
+parser.add_argument('--output_html', action='store_true', help="Save results to an HTML file")
 
 args = parser.parse_args()
 
@@ -30,7 +31,6 @@ with open(args.ip_file, 'r') as file:
 if not ip_list:
     print("Error: IP file is empty or contains only invalid entries.")
     exit(1)
-
 
 default_commands = [
     "whoami /priv",
@@ -49,7 +49,6 @@ for ip in ip_list:
     ip_results = [ip]
     for command in default_commands:
         try:
-            # Bağlantı yöntemi kontrolü
             if args.key_file:
                 cmd = ["crackmapexec", "ssh", ip, "-u", args.username, "-k", args.key_file, "-x", command]
             elif args.password:
@@ -58,8 +57,11 @@ for ip in ip_list:
                 raise ValueError("Either password or key file must be provided.")
 
             process = subprocess.run(cmd, capture_output=True, text=True)
-            result = process.stdout if process.returncode == 0 else process.stderr
-            ip_results.append(result.strip())
+            if process.returncode == 0:
+                result = process.stdout.strip()
+            else:
+                result = f"Error: {process.stderr.strip()}"
+            ip_results.append(result)
         except ValueError as ve:
             ip_results.append(str(ve))
         except Exception as e:
@@ -67,36 +69,29 @@ for ip in ip_list:
     results.append(ip_results)
 
 headers = ["IP"] + default_commands
-
 print(tabulate(results, headers=headers, tablefmt="grid"))
 
 if args.output_csv:
-    with open(args.output_csv, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
+    with open('output.csv', mode='w', newline='') as file:
+        writer = csv.writer(file)
         writer.writerow(headers)
-        writer.writerows(results)
-    print(f"Results saved to CSV file: {args.output_csv}")
+        for result in results:
+            writer.writerow(result)
+    print("Results saved to 'output.csv'")
 
 if args.output_html:
-    html_content = '<html><head><title>Command Execution Results</title></head><body>'
-    html_content += '<h2>Command Execution Results</h2>'
-    html_content += '<table border="1" style="border-collapse: collapse; width: 100%;">'
-    
-    html_content += '<tr>'
-    for header in headers:
-        html_content += f'<th style="padding: 8px; text-align: center;">{header}</th>'
-    html_content += '</tr>'
-    
-    for row in results:
-        html_content += '<tr>'
-        for cell in row:
-            html_content += f'<td style="padding: 8px; text-align: center;">{cell}</td>'
-        html_content += '</tr>'
-    
-    html_content += '</table>'
-    html_content += '</body></html>'
-    
-
-    with open(args.output_html, 'w') as htmlfile:
-        htmlfile.write(html_content)
-    print(f"Results saved to HTML file: {args.output_html}")
+    with open('output.html', mode='w') as file:
+        file.write('<html><head><title>Command Execution Results</title></head><body>')
+        file.write('<h2>Command Execution Results</h2>')
+        file.write('<table border="1" style="border-collapse: collapse; width: 100%;">')
+        file.write('<tr>')
+        for header in headers:
+            file.write(f'<th style="padding: 8px; text-align: center;">{header}</th>')
+        file.write('</tr>')
+        for result in results:
+            file.write('<tr>')
+            for col in result:
+                file.write(f'<td style="padding: 8px; text-align: center;">{col}</td>')
+            file.write('</tr>')
+        file.write('</table></body></html>')
+    print("Results saved to 'output.html'")
