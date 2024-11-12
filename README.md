@@ -31,17 +31,19 @@ The script accepts several arguments that allow you to customize its behavior:
 - `--password`: Password for SSH authentication. Either this or the --key_file option must be provided.
 - `--key_file`: Path to a private SSH key file for authentication. Either this or the --password option must be provided.
 - `--commands`: A space-separated list of additional commands to execute on the remote machines.
+- `--output_csv`: An option to csv formatted output
+- `--output_html`: An option to html formatted output
 
 ## Example Usage:
 
 ### Using Password Authentication
 ```bash
-python ssh_executor.py --ip_file ips.txt --username user --key_file '/path/to/private_key' --commands 'uptime' 'df -h'
+python ssh_command_runner.py --ip_file ips.txt --username user --password 'password123' --commands 'uptime' 'df -h'
 ```
 
 ### Using Private Key Authentication
 ```bash
-python ssh_executor.py --ip_file ips.txt --username user --key_file '/path/to/private_key' --commands 'uptime' 'df -h'
+python ssh_command_runner.py --ip_file ips.txt --username user --key_file '/path/to/private_key' --commands 'uptime' 'df -h'
 ```
 
 ## Default Commands:
