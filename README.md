@@ -1,4 +1,4 @@
-# SSH Command Runner for CrackMapExec
+# SSH Command Runner
 
 This Python script allows you to run a series of SSH commands over a list of IP addresses using [CrackMapExec](https://github.com/byt3bl33d3r/CrackMapExec). The script supports authentication using either a password or a private key, and it will display the results of the commands executed on remote hosts in a clean, tabular format.This script allows you to quickly run commands on multiple machines, offers flexible authentication options, automates tasks, and presents the results in a clean tabular format, saving time.
 
